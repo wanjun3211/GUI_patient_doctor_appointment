@@ -1,0 +1,299 @@
+from tkinter import Frame,Label,Button,BROWSE,Listbox,Entry
+# from tkinter import *
+import tkinter as tk
+from tkinter import ttk
+from tkinter.messagebox import showinfo
+from ClinicController import ClinicController
+import re
+
+# Create a ClinicController instance
+clinic = ClinicController("ABC Clinic")
+
+
+fileName = open("Doctor.txt", "r")
+count = 0
+for line in fileName:
+    data = line.strip()
+    data = data.split(",")
+    count = count + 1
+    fName = data[0]
+    lName = data[1]
+    spec = data[2]
+    clinic.addDoctor(data[0], data[1], data[2])
+
+
+fileName = open("Patient.txt", "r")
+count = 0
+for line in fileName:
+    data = line.strip()
+    data = data.split(",")
+    count = count + 1
+    fName = data[0]
+    lName = data[1]
+    clinic.addPatient(data[0], data[1])
+
+
+def assign_doctor():
+    # get selected doctor
+    selDoctorIndex = lstbox_doctor.curselection()
+    if not selDoctorIndex:  # Check if no doctor is selected
+        showinfo("Selection Error", "Please select a doctor.")
+        return
+
+    selectedDoctor = lstbox_doctor.get(selDoctorIndex)
+    doctor_info = selectedDoctor.split()
+
+    # get the doctor ID and search via it
+    doctorID = int(doctor_info[-1])
+    aDoctor = clinic.searchDoctor_for_assign(doctorID)
+
+    # get selected patient
+    selPatientIndex = lstbox_patient.curselection()
+    if not selPatientIndex:  # Check if no patient is selected
+        showinfo("Selection Error", "Please select a patient.")
+        return
+
+    selectedPatient = lstbox_patient.get(selPatientIndex)
+    patient_info = selectedPatient.split()
+
+    # get the patient ID and search via it
+    patientID = int(patient_info[-1])
+    aPatient = clinic.searchPatient_for_assign(patientID)
+
+    # assign doctor to a patient and use variable 'message_assignment' to gain the information after assigning doctor
+    message_assignment = clinic.assignDoctorTOpatient(aPatient, aDoctor)
+    showinfo("Doctor Assignment", message_assignment)
+
+
+def add_consultation():
+    # Get selected doctor
+    selDoctorIndex = lstbox_doctor.curselection()
+    if not selDoctorIndex:
+        showinfo("Selection Error", "Please select a doctor.")
+        return
+
+    selectedDoctor = lstbox_doctor.get(selDoctorIndex)
+    doctor_info = selectedDoctor.split()
+    doctorID = int(doctor_info[-1])
+    aDoctor = clinic.searchDoctor_for_assign(doctorID)
+
+    # Get selected patient
+    selPatientIndex = lstbox_patient.curselection()
+    if not selPatientIndex:
+        showinfo("Selection Error", "Please select a patient.")
+        return
+
+    selectedPatient = lstbox_patient.get(selPatientIndex)
+    patient_info = selectedPatient.split()
+    patientID = int(patient_info[-1])
+    aPatient = clinic.searchPatient_for_assign(patientID)
+
+    # Get user input for date, fee, and reason
+    date = entry_date.get()
+    reason = entry_reason.get()
+    fee = entry_fee.get()
+
+    # YYYY-MM-DD format
+    date_pattern = r"\d{4}-\d{2}-\d{2}"  
+
+    if not re.match(date_pattern, date):
+        showinfo("Input Error", "Please enter the date in the format YYYY-MM-DD.")
+        return
+
+    if not date or not reason or not fee:
+        showinfo("Input Error", "Please fill in all fields.")
+        return
+
+    try:
+        fee = int(fee)
+    except ValueError:
+        showinfo("Input Error", "Fee must be a valid integer.")
+        return
+
+    # Add consultation and show message
+    Message_consultation = clinic.addConsulation(
+        date, aDoctor, aPatient, reason, fee)
+    showinfo("Consultation Information", Message_consultation)
+
+    # Clear the input fields
+    entry_date.delete(0, 'end')
+    entry_reason.delete(0, 'end')
+    entry_fee.delete(0, 'end')
+
+
+def doctor_infor():
+    # Get selected doctor indices
+    selDoctorIndex = lstbox_doctor.curselection()
+
+    if not selDoctorIndex:
+        showinfo("Selection Required", "Please select a doctor from the list.")
+        return
+
+    selectedDoctor = lstbox_doctor.get(selDoctorIndex)
+    doctor_info = selectedDoctor.split()
+
+    doctorID = int(doctor_info[-1])
+    message_infor_doctor = clinic.showDoctorDetails(doctorID)
+    showinfo("Doctor Information", message_infor_doctor)
+
+
+def patient_infor():
+    # get selected patient
+    selPatientIndex = lstbox_patient.curselection()
+
+    if not selPatientIndex:
+        showinfo("Selection Required", "Please select a patient from the list.")
+        return
+    selectedPatient = lstbox_patient.get(selPatientIndex)
+    patient_info = selectedPatient.split()
+# get the patient ID and search via it
+    patientID = int(patient_info[-1])
+    message_infor_patient = clinic.showPatientDetails(patientID)
+    showinfo("Patient Information", message_infor_patient)
+
+
+
+def search_doctor():
+    input_search_doctor = entry_search_doctor.get()
+    print('input doctor:', input_search_doctor)
+    print('input doctor:', type(input_search_doctor))
+    if not input_search_doctor:
+        showinfo(
+            "Input Error", "Please input at least a doctor ID or first name or last name.")
+        return
+    # Search for doctor and show message
+    searched_result = clinic.searchDoctor(input_search_doctor)
+    showinfo("Search result", searched_result)
+
+    # Clear the input field
+    entry_search_doctor.delete(0, 'end')
+
+
+def search_patient():
+    input_search_patient = entry_search_patient.get()
+    print("input patient:", input_search_patient)
+
+    if not input_search_patient:
+        showinfo(
+            "Input Error", "Please input at least a patient ID or first name or last name.")
+        return
+    # Search for patient and show message
+    searched_result = clinic.search_Patient(input_search_patient)
+    showinfo("Search result", searched_result)
+
+    # Clear the input field
+    entry_search_patient.delete(0, 'end')
+
+
+def consulation_report():
+    consulation_report = clinic.showAllConsultations()
+    showinfo("Consulation Report", consulation_report)
+
+
+root = tk.Tk()
+root.title("Clinic Management System")
+root.maxsize(900, 1000)
+root.config(bg="skyblue")
+
+main_frame = Frame(root)
+main_frame.pack(padx=10, pady=10)
+
+main_frame.columnconfigure(0, weight=1)
+main_frame.columnconfigure(1, weight=0)
+
+frame1 = Frame(main_frame, width=800, height=250,
+               borderwidth=2, relief="ridge")
+frame1.grid(row=0, column=0, padx=10, pady=5, sticky="nsew")
+
+frame2 = Frame(main_frame, width=800, height=200,
+               borderwidth=2, relief="ridge")
+frame2.grid(row=1, column=0, padx=10, pady=5, sticky="nsew")
+
+frame3 = Frame(main_frame, width=800, height=200,
+               borderwidth=2, relief="ridge")
+frame3.grid(row=2, column=0, padx=10, pady=5, sticky="nsew")
+
+
+# Add labels for lstbox_patient and lstbox_doctor
+Label(frame1, text="Patients", font=("Helvetica", 12)).grid(
+    row=0, column=0, padx=5, sticky="w")
+lstbox_patient = Listbox(master=frame1, exportselection=0, selectmode=BROWSE)
+lstbox_patient.grid(row=1, column=0, padx=5, pady=5)
+for patient in clinic.patientList:
+    lstbox_patient.insert(
+        tk.END, f"{patient.fName} {patient.lName} {patient.patientID}")
+
+Label(frame1, text="Doctors", font=("Helvetica", 12)).grid(
+    row=0, column=1, padx=5, sticky="w")
+lstbox_doctor = Listbox(master=frame1, exportselection=0, selectmode=BROWSE)
+lstbox_doctor.grid(row=1, column=1, padx=5, pady=5)
+for doctor in clinic.doctorList:
+    lstbox_doctor.insert(
+        tk.END, f"{doctor.fName} {doctor.lName} {doctor.doctorID}")
+
+
+# Add the Consultation section to the right of frame1
+frame_consultation = Frame(frame1)
+frame_consultation.grid(row=0, column=2, rowspan=2, padx=20, sticky="n")
+
+# Labels and Entry widgets for Consultation section
+Label(frame_consultation, text="Consultation",
+      font=("Helvetica", 14)).pack(pady=5)
+Label(frame_consultation, text="Date:").pack()
+entry_date = Entry(frame_consultation)
+entry_date.pack()
+
+Label(frame_consultation, text="Reason:").pack()
+entry_reason = Entry(frame_consultation)
+entry_reason.pack()
+
+Label(frame_consultation, text="Fee:").pack()
+entry_fee = Entry(frame_consultation)
+entry_fee.pack()
+
+# Buttons for Assign Doctor and Add Consultation
+button_assign_doctor = Button(
+    frame2, text="Assign Doctor", command=assign_doctor)
+button_assign_doctor.grid(row=0, column=0, padx=5, pady=5)
+
+button_add_consultation = Button(
+    frame2, text="Add Consultation", command=add_consultation)
+button_add_consultation.grid(row=0, column=1, padx=150, pady=5)
+
+
+button_consultation_report = Button(
+    frame2, text="Consultation Report", command=consulation_report)
+button_consultation_report.grid(row=0, column=2, padx=200, pady=5)
+
+
+# Entry widgets for searching doctor and patient
+entry_search_doctor = Entry(frame3)
+entry_search_doctor.grid(row=1, column=8, padx=5,
+                         pady=5)
+button_search_doctor = Button(
+    frame3, text="Search Doctor:", command=search_doctor)
+button_search_doctor.grid(row=1, column=5, padx=5, pady=5)
+
+
+
+entry_search_patient = Entry(frame3)
+entry_search_patient.grid(row=1, column=3, padx=5,
+                          pady=5)
+button_search_patient = Button(
+    frame3, text="Search Patient:", command=search_patient)
+button_search_patient.grid(row=1, column=0, padx=5, pady=5)
+
+# Buttons for Doctor Information, Patient Information
+button_doctor_info = Button(
+    frame3, text="Doctor Information", command=doctor_infor)
+button_doctor_info.grid(row=0, column=5, padx=5, pady=5)
+
+button_patient_info = Button(
+    frame3, text="Patient Information", command=patient_infor)
+button_patient_info.grid(row=0, column=0, padx=5, pady=5)
+
+
+root.mainloop()
+
+
+
